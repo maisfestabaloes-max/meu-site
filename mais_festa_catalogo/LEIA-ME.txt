@@ -1,0 +1,31 @@
+# Catálogo Mais Festa — protótipo inicial
+
+## Como abrir
+1. Extraia o arquivo ZIP.
+2. Abra `index.html` em um navegador moderno.
+3. Clique em **Área administrativa**.
+4. Senha de demonstração: `festa2026`.
+
+## O que já funciona neste protótipo
+- Catálogo responsivo para celular e computador.
+- Busca por nome, descrição e código.
+- Categorias personalizáveis.
+- Cadastro e edição de produtos, serviços e locações.
+- Código automático MF00001, MF00002...
+- Seleção de várias imagens por cadastro.
+- Botão de consulta pelo WhatsApp, com nome e código do produto na mensagem.
+- Escolha do WhatsApp de Balões ou Vendas por produto.
+- Destaques, ocultação e exclusão de itens.
+- Exportação/importação de backup JSON.
+
+## Importante antes de publicar
+Esta é a primeira versão de demonstração. Os dados ficam no armazenamento local do navegador (`localStorage`), então não são compartilhados entre computadores ou celulares. A senha de demonstração não é autenticação segura. **Não publique esta versão como sistema de produção nem use dados confidenciais.**
+
+Próxima etapa para uso real:
+1. Criar projeto Supabase.
+2. Configurar tabelas de produtos/categorias, autenticação e armazenamento de imagens.
+3. Restringir acesso administrativo com políticas de segurança (RLS).
+4. Conectar o front-end ao banco.
+5. Publicar no serviço de hospedagem e testar permissões antes de divulgar o endereço.
+
+A logo está em `imagens/logo.png`.
