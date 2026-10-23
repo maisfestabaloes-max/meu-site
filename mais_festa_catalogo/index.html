@@ -100,48 +100,13 @@ function codeFor(n){return 'MF'+String(n??'').padStart(5,'0')}
 function imageUrl(path){if(!path)return '';if(/^https?:\/\//i.test(path))return path;return supabaseClient.storage.from(BUCKET).getPublicUrl(path).data.publicUrl}
 function firstImage(p){return p.images&&p.images.length?imageUrl(p.images[0].image_path):''}
 function waMessage(p){return `Olá! Gostaria de consultar o preço e a disponibilidade deste produto do catálogo Mais Festa.\\n\\nProduto: ${p.name}\\nCódigo: ${codeFor(p.code)}${p.category_name?`\\nCategoria: ${p.category_name}`:''}${p.description?`\\nDescrição: ${p.description}`:''}`}
-function waLink(p){const phone=PHONES[p.whatsapp_channel]||PHONES.vendas;return `https://wa.me/${phone}?text=${encodeURIComponent(waMessage(p))}`}
-async function shareProduct(p,button){
-  const image=firstImage(p);
-  const originalText=button.textContent;
-  button.disabled=true;
-  button.textContent='Preparando...';
-  try{
-    if(image && navigator.share && navigator.canShare && window.File){
-      const response=await fetch(image);
-      if(!response.ok)throw new Error('Não foi possível carregar a foto.');
-      const blob=await response.blob();
-      const ext=(blob.type&&blob.type.includes('png'))?'png':(blob.type&&blob.type.includes('webp'))?'webp':'jpg';
-      const file=new File([blob],`${codeFor(p.code)}-${String(p.name).replace(/[^a-z0-9_-]/gi,'-')}.${ext}`,{type:blob.type||'image/jpeg'});
-      if(navigator.canShare({files:[file]})){
-        await navigator.share({files:[file],title:p.name,text:waMessage(p)});
-        return;
-      }
-    }
-    // Fallback: abre a conversa com a mensagem pronta e baixa a foto para anexar manualmente.
-    window.open(waLink(p),'_blank','noopener');
-    if(image){
-      const link=document.createElement('a');
-      link.href=image;
-      link.download=`${codeFor(p.code)}-${String(p.name).replace(/[^a-z0-9_-]/gi,'-')}.jpg`;
-      link.target='_blank';
-      link.rel='noopener';
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      alert('A mensagem do WhatsApp foi preparada. Se a foto não baixar automaticamente, salve a imagem do produto e anexe-a na conversa antes de enviar.');
-    }else{
-      alert('A mensagem do WhatsApp foi preparada, mas este produto ainda não tem foto cadastrada.');
-    }
-  }catch(error){
-    if(error && error.name==='AbortError')return;
-    console.error('Falha ao compartilhar produto:',error);
-    window.open(waLink(p),'_blank','noopener');
-    alert('Não foi possível compartilhar a foto diretamente. A mensagem foi aberta no WhatsApp; baixe a foto do produto no catálogo e anexe-a à conversa.');
-  }finally{
-    button.disabled=false;
-    button.textContent=originalText;
-  }
+function waLink(p){return `https://wa.me/${PHONES.vendas}?text=${encodeURIComponent(waMessage(p))}`}
+function shareProduct(p,button){
+  // Abre diretamente a conversa do setor de vendas, sem a tela intermediária de compartilhamento.
+  const link=waLink(p);
+  const whatsappWindow=window.open(link,'_blank','noopener');
+  // Em navegadores que bloqueiam nova aba, navega na mesma aba.
+  if(!whatsappWindow) window.location.href=link;
 }
 function productTypeLabel(type){return type==='servico'?'Serviço':type==='locacao'?'Locação':'Produto'}
 function renderCategories(){const el=$('categories');const cats=['Todas',...db.categories.map(c=>c.name)];if(!cats.includes(activeCategory))activeCategory='Todas';el.innerHTML=cats.map(c=>`<button class="cat ${activeCategory===c?'active':''}" data-cat="${esc(c)}">${esc(c)}</button>`).join('');el.querySelectorAll('[data-cat]').forEach(b=>b.onclick=()=>{activeCategory=b.dataset.cat;renderCategories();renderProducts()});$('categoryCount').textContent=`${db.categories.length} categorias`}
