@@ -100,13 +100,15 @@ function codeFor(n){return 'MF'+String(n??'').padStart(5,'0')}
 function imageUrl(path){if(!path)return '';if(/^https?:\/\//i.test(path))return path;return supabaseClient.storage.from(BUCKET).getPublicUrl(path).data.publicUrl}
 function firstImage(p){return p.images&&p.images.length?imageUrl(p.images[0].image_path):''}
 function waMessage(p){return `Olá! Gostaria de consultar o preço e a disponibilidade deste produto do catálogo Mais Festa.\\n\\nProduto: ${p.name}\\nCódigo: ${codeFor(p.code)}${p.category_name?`\\nCategoria: ${p.category_name}`:''}${p.description?`\\nDescrição: ${p.description}`:''}`}
-function waLink(p){const category=String(p.category_name||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();const balloonCategories=['baloes','mesa','gas helio','helio','vareta','numeros','topos','revelacao','outros'];const phone=(category.includes('balao')||balloonCategories.includes(category))?PHONES.baloes:PHONES.vendas;return `https://wa.me/${phone}?text=${encodeURIComponent(waMessage(p))}`}
+function waLink(p){
+  // O destino é definido pela escolha salva no cadastro do produto, não pelo nome da categoria.
+  const channel=String(p.whatsapp_channel||'vendas').toLowerCase().trim();
+  const phone=channel==='baloes'?PHONES.baloes:PHONES.vendas;
+  return `https://wa.me/${phone}?text=${encodeURIComponent(waMessage(p))}`;
+}
 function shareProduct(p,button){
-  // Abre diretamente a conversa do setor de vendas, sem a tela intermediária de compartilhamento.
-  const link=waLink(p);
-  const whatsappWindow=window.open(link,'_blank','noopener');
-  // Em navegadores que bloqueiam nova aba, navega na mesma aba.
-  if(!whatsappWindow) window.location.href=link;
+  // Sempre tenta abrir o WhatsApp em uma nova aba; nunca redireciona a página do catálogo.
+  window.open(waLink(p),'_blank');
 }
 function productTypeLabel(type){return type==='servico'?'Serviço':type==='locacao'?'Locação':'Produto'}
 function renderCategories(){const el=$('categories');const cats=['Todas',...db.categories.map(c=>c.name)];if(!cats.includes(activeCategory))activeCategory='Todas';el.innerHTML=cats.map(c=>`<button class="cat ${activeCategory===c?'active':''}" data-cat="${esc(c)}">${esc(c)}</button>`).join('');el.querySelectorAll('[data-cat]').forEach(b=>b.onclick=()=>{activeCategory=b.dataset.cat;renderCategories();renderProducts()});$('categoryCount').textContent=`${db.categories.length} categorias`}
